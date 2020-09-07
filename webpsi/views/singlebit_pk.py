@@ -63,5 +63,5 @@ def ws(websocket: WebSocket):
                 data = _generator.get_bytes(_BYTES_PER_TRIAL)
                 hit = to_bool(data, _generator.bit_numbering)
                 websocket.send('HIT %d' % (1 if hit else 0))
-                _log_file.write('%s,%s,%s,%.3f,%s,%s,%s\n' % (utc_datetime_string(), request.remote_addr, session_id, hit, str(base64.b64encode(data)), _generator.id, _generator.bit_numbering.value))
+                _log_file.write('%s,%s,%s,%d,%s,%s,%s\n' % (utc_datetime_string(), request.remote_addr, session_id, hit, base64.b64encode(data).decode('utf-8'), _generator.id, _generator.bit_numbering.value))
                 _log_file.flush()
