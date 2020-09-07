@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% set title = 'Classic REG Experiment' %}
+
+{% block content %}
+<h3>{{ title }}</h3>
+<div class="mt-4">
+  The following random walk graph is generated using a quantum random number generator. If consciousness can
+  influence quantum-level events, you should be able to influence the graph using your mind.
+</div>
+<div class="mt-4">
+  <b>Try to make the graph to go up!</b>
+</div>
+<canvas class="mt-4" id="chart" style="border: thin solid #999; padding: 10px;"></canvas>
+<div class="mt-4 text-center"><button class="btn btn-secondary" type="button" id="runButton" onclick="run()" >Run</button></div>
+<table class="mt-4 stats">
+  <tr>
+    <td>Z-score</td>
+    <td>:</td>
+    <td id="zScore">0.000</td>
+  </tr>
+  <tr>
+    <td>P</td>
+    <td>:</td>
+    <td id="p">0.500</td>
+  </tr>
+  <tr>
+    <td>Run ID</td>
+    <td>:</td>
+    <td id="runId" style="width: 9ch">-</td>
+  </tr>
+  <tr>
+    <td>OWD</td>
+    <td>:</td>
+    <td id="owd">-</td>
+  </tr>
+</table>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jstat/1.9.3/jstat.min.js"></script>
+<script>
+    var TRIALS_PER_RUN = 30;
+
+    var envelope = [];
+
+    for (var i = 0; i < TRIALS_PER_RUN; i += 0.01) {
+        envelope.push({ x: i, y: 1.645 * Math.sqrt(i) });
+    }
+
+    var randomWalkData = [{ x: 0, y: 0 }];
+
+    var chartContext = $('#chart');
+
+    var chart = new Chart(chartContext, {
+        type: 'scatter',
+        data: {
+            datasets: [
+                {
+                    data: envelope,
+                    showLine: true,
+                    pointRadius: 0,
+                    fill: false,
+                    lineTension: 0,
+                    borderColor: 'cyan',
+                    borderWidth: 1,
+                    label: 'p = 0.05'
+                },
+                {
+                    data: randomWalkData,
+                    showLine: true,
+                    pointRadius: 0,
+                    fill: false,
+                    lineTension: 0,
+                    borderColor: 'white',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            legend: {
+                labels: {
+                    fontColor: '#999',
+                    filter: function(label) {
+                        if (label.text != null) return true;
+                    }
+                }
+            },
+            events: [],
+            animation: {
+                duration: 0
+            },
+            scales: {
+                xAxes: [
+                    {
+                        position: 'bottom',
+                        gridLines: {
+                            display: false
+                        },
+                        ticks: {
+                            max: TRIALS_PER_RUN,
+                            min: 0,
+                            stepSize: 10,
+                            fontColor: '#999'
+                        }
+                    }
+                ],
+                yAxes: [
+                    {
+                        gridLines: {
+                            display: false
+                        },
+                        ticks: {
+                            max: 2 * envelope[envelope.length - 1]['y'],
+                            min: -1.5 * envelope[envelope.length - 1]['y'],
+                            display: false
+                        }
+                    }
+                ]
+            }
+        }
+    });
+
+    var websocket = new WebSocket(document.location.href.replace('http://', 'ws://').replace(/\/$/, '') + '/ws');
+
+    var owdData = [];
+
+    var pingSentTime;
+
+    websocket.onmessage = function(event) {
+        var splitMessage = event.data.split(' ');
+        var messageType = splitMessage[0].toUpperCase();
+        if (messageType === 'PONG') {
+            owdData.push((performance.now() - pingSentTime) / 2);
+            if (owdData.length < 5) {
+                setTimeout(function() {
+                    websocket.send('PING');
+                    pingSentTime = performance.now()
+                }, 100);
+            } else {
+                $('#owd').html(Math.round(jStat.mean(owdData)) + ' ms');
+                owdData.length = 0;
+                $.get('api/run_id', function(runId) {
+                    $('#runId').html(runId);
+                    websocket.send('RUN ' + runId + ' ' + TRIALS_PER_RUN)
+                });
+            }
+        } else if (messageType === 'GAUSSIAN') {
+            var gaussian = parseFloat(splitMessage[1]);
+            randomWalkData.push({ x: randomWalkData.length, y: randomWalkData[randomWalkData.length - 1]['y'] + gaussian });
+            chart.update();
+            var zScore = randomWalkData[randomWalkData.length - 1]['y'] / Math.sqrt(randomWalkData.length);
+            var p = 1 - jStat.normal.cdf(zScore, 0, 1);
+            $('#zScore').html(zScore.toFixed(3));
+            $('#p').html(p.toFixed(3));
+            if (randomWalkData.length - 1 >= TRIALS_PER_RUN) {
+                $('#runButton').prop('disabled', false);
+            }
+        }
+    };
+
+    function run() {
+        $('#runButton').prop('disabled', true);
+        randomWalkData.length = 0;
+        randomWalkData.push({ x: 0, y: 0 });
+        chart.update();
+        websocket.send('PING');
+        pingSentTime = performance.now()
+    }
+</script>
+{% endblock %}

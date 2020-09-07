@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% set title = 'Single-Bit PK Game' %}
+
+{% block content %}
+<h3>{{ title }}</h3>
+<div class="mt-4">
+  By clicking the run button, a quantum random number generator will be used to color the box below with red or green.
+  If consciousness can influence quantum-level events, you should be able to influence the color.
+</div>
+<div class="mt-4">
+  <b>Try to make it green!</b>
+</div>
+<div id="box" class="mt-4" style="width: 150px; height: 150px; margin-left: auto; margin-right: auto; border: thin solid #999"></div>
+<div class="mt-4 text-center"><button class="btn btn-secondary" type="button" id="runButton" onclick="run()">Run</button></div>
+<table class="mt-4 stats">
+  <tr>
+    <td>Trial count</td>
+    <td>:</td>
+    <td id="trialCount">0</td>
+  </tr>
+  <tr>
+    <td>Hit rate</td>
+    <td>:</td>
+    <td id="hitRate">-</td>
+  </tr>
+  <tr>
+    <td>P</td>
+    <td>:</td>
+    <td id="p">-</td>
+  </tr>
+  <tr>
+    <td>Session ID</td>
+    <td>:</td>
+    <td id="sessionId" style="width: 9ch">-</td>
+  </tr>
+  <tr>
+    <td>RTD</td>
+    <td>:</td>
+    <td id="rtd">-</td>
+  </tr>
+</table>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jstat/1.9.3/jstat.min.js"></script>
+<script>
+    var sessionId = null;
+
+    $.get('api/session_id', function(data) {
+        sessionId = data;
+        $('#sessionId').html(sessionId);
+    });
+
+    var trials = [];
+
+    var websocket = new WebSocket(document.location.href.replace('http://', 'ws://').replace(/\/$/, '') + '/ws');
+
+    var requestSentTime;
+
+    websocket.onmessage = function(event) {
+        var splitMessage = event.data.split(' ');
+        var messageType = splitMessage[0].toUpperCase();
+        if (messageType === 'HIT') {
+            var rtd = performance.now() - requestSentTime;
+            var hit = parseInt(splitMessage[1]);
+            if (hit === 1) {
+                $('#box').css('backgroundColor', '#0f0');
+            } else {
+                $('#box').css('backgroundColor', '#f00');
+            }
+            trials.push(hit);
+            var hitCount = trials.filter(function(trial) { return trial === 1 }).length;
+            var hitRate = hitCount / trials.length;
+            var p = 1 - jStat.binomial.cdf(hitCount - 1, trials.length, 0.5);
+            $('#trialCount').html(trials.length);
+            $('#hitRate').html(Math.round(hitRate * 100) + "%");
+            $('#p').html(p.toFixed(3));
+            $('#rtd').html(Math.round(rtd) + ' ms');
+            $('#runButton').prop('disabled', false);
+        }
+    };
+
+    function run() {
+        $('#runButton').prop('disabled', true);
+        websocket.send('RUN ' + sessionId);
+        requestSentTime = performance.now();
+    }
+</script>
+{% endblock %}
