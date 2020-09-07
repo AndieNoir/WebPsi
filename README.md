@@ -6,9 +6,9 @@ A Python web app to aid psychic abilities experiments.
 Running
 -------
 
-1. WebPsi supports both local and remote random number generation. For local, install [ComScire driver](https://comscire.com/downloads/).
-   For remote, run [Quanttp](https://github.com/awasisto/quanttp) on the remote machine and set `QUANTTP_LOCATION`
-   environment variable
+1. WebPsi currently supports local and remote random number generation using ComScire QNG. For local, install
+   [ComScire driver](https://comscire.com/downloads/). For remote, run [Quanttp](https://github.com/awasisto/quanttp)
+   on the remote machine and set `QUANTTP_LOCATION` environment variable
    
    Example:
 
@@ -42,7 +42,7 @@ Adding a new random number generator
     from webpsi.generator.base import Generator
     
     
-    class DevHwrng(Generator, id='my_rng', bit_numbering=BitNumbering.BitNumbering.UNKNOWN):
+    class DevHwrng(Generator, id='my_rng', bit_numbering=Generator.BitNumbering.UNKNOWN):
     
        def get_bytes(self, length):
            with open('/dev/hwrng', 'rb') as f:
