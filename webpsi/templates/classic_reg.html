@@ -14,11 +14,6 @@
 <div class="mt-4 text-center"><button class="btn btn-secondary" type="button" id="runButton" onclick="run()" >Run</button></div>
 <table class="mt-4 stats">
   <tr>
-    <td>Z-score</td>
-    <td>:</td>
-    <td id="zScore">0.000</td>
-  </tr>
-  <tr>
     <td>P</td>
     <td>:</td>
     <td id="p">0.500</td>
@@ -146,9 +141,8 @@
             var gaussian = parseFloat(splitMessage[1]);
             randomWalkData.push({ x: randomWalkData.length, y: randomWalkData[randomWalkData.length - 1]['y'] + gaussian });
             chart.update();
-            var zScore = randomWalkData[randomWalkData.length - 1]['y'] / Math.sqrt(randomWalkData.length);
-            var p = 1 - jStat.normal.cdf(zScore, 0, 1);
-            $('#zScore').html(zScore.toFixed(3));
+            var x = randomWalkData[randomWalkData.length - 1]['y'] / Math.sqrt(randomWalkData.length);
+            var p = 1 - jStat.normal.cdf(x, 0, 1);
             $('#p').html(p.toFixed(3));
             if (randomWalkData.length - 1 >= TRIALS_PER_RUN) {
                 $('#runButton').prop('disabled', false);
