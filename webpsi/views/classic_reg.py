@@ -74,6 +74,6 @@ def run_trials(websocket: WebSocket, run_id: str, trial_count: int, remote_addr:
         data = _generator.get_bytes(_BYTES_PER_TRIAL)
         gaussian = to_gaussian(data)
         websocket.send('GAUSSIAN %f' % gaussian)
-        _log_file.write('%s,%s,%s,%d,%.3f,%s\n' % (utc_datetime_string(), remote_addr, run_id, i + 1, gaussian, _generator.id))
+        _log_file.write(f'{utc_datetime_string()},{remote_addr},{run_id},{i + 1},{gaussian:.3f},{_generator.id}\n')
         _log_file.flush()
     _valid_run_ids.remove(run_id)
