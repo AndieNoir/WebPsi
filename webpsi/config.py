@@ -17,6 +17,7 @@ import os
 
 from webpsi.generator.comscire_local import ComScireLocal
 from webpsi.generator.comscire_quanttp import ComScireQuanttp
+from webpsi.generator.rndo_comscire import Randonautica_QRNG
 
 
 GENERATOR_CLASS = ComScireQuanttp if ('QUANTTP_LOCATION' in os.environ) else ComScireLocal

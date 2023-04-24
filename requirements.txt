@@ -1,7 +1,8 @@
-Flask==1.1.2
+Flask==1.1.4
 Flask-Sockets==0.2.1
 Flask-Breadcrumbs==0.5.1
-gevent==20.9.0
+gevent==22.10.2
 gevent-websocket==0.10.1
-pywin32==227; platform_system == 'Windows'
+requests==2.28.1
 websocket-client==0.57.0
+markupsafe==2.0.1
